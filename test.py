@@ -14,6 +14,7 @@ import csv
 from selenium.webdriver.firefox.options import Options
 import sys
 
+
 def connect_to_db():
     client = MongoClient(
         "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false")
@@ -52,6 +53,7 @@ def chrome_webdriver():
         cookie = 'AQEDATe-csACVLx3AAABfAolGqsAAAF8LjGeq00AOqY34TIfcMpo0GMSXwwReRXp8gKoSsgxI97st5e4FDlO4VK3DSXXOevyluAtGlk60gX6PwXLDBC_9WEviRb8xyLb9vutyfrzfaji_5hPevzVoRdU'
         firefox_capabilities['acceptSslCerts'] = True
         chrome = webdriver.Firefox(options=options, capabilities=firefox_capabilities)
+        # chrome = webdriver.Firefox(capabilities=firefox_capabilities)
         chrome.set_page_load_timeout(20)
         chrome.get("http://api.ipify.org")
         chrome.set_page_load_timeout(60)
@@ -110,7 +112,7 @@ def scrape_linkedin(link, chrome):
                 jsonOutput['Company Size'] = text[i+1]
             if text[i] == 'Website':
                 jsonOutput['Website'] = text[i+1]
-        print('function',jsonOutput)
+        print('function', jsonOutput)
         return jsonOutput
 
     except Exception as e:
@@ -145,7 +147,7 @@ if __name__ == "__main__":
         else:
             non_linked_in_companies.append(document.get('uuid'))
         # print(len(links))
-        if len(links) == 10:
+        if len(links) == 20:
             # print(links)
             while True:
                 try:
@@ -220,10 +222,12 @@ if __name__ == "__main__":
                         else:
                             jsonOutput['Current Funding Level'] = ''
                         if document.get('num_employees_enum') is not None:
-                            size = document.get(
-                                'num_employees_enum').split('_')
-                            jsonOutput['Company Size'] = str(
+                            try:
+                                size = document.get('num_employees_enum').split('_')
+                                jsonOutput['Company Size'] = str(
                                 int(size[1])) + "-" + str(int(size[2])) + " employees"
+                            except:
+                                jsonOutput['Company Size'] = 'Max employees'
                         else:
                             jsonOutput['Company Size'] = ''
                         if document.get('website') is not None:
@@ -268,9 +272,12 @@ if __name__ == "__main__":
                     else:
                         jsonOutput['Current Funding Level'] = ''
                     if document.get('num_employees_enum') is not None:
-                        size = document.get('num_employees_enum').split('_')
-                        jsonOutput['Company Size'] = str(
+                        try:
+                            size = document.get('num_employees_enum').split('_')
+                            jsonOutput['Company Size'] = str(
                             int(size[1])) + "-" + str(int(size[2])) + " employees"
+                        except:
+                            jsonOutput['Company Size'] = 'Max employees'
                     else:
                         jsonOutput['Company Size'] = ''
                     if document.get('website') is not None:
