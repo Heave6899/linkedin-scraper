@@ -11,7 +11,8 @@ import json
 from pymongo import MongoClient
 from pprint import pprint
 import csv
-
+from selenium.webdriver.firefox.options import Options
+import sys
 
 def connect_to_db():
     client = MongoClient(
@@ -36,6 +37,9 @@ def chrome_webdriver():
         PROXY = proxy_generator()  # IP:PORT or HOST:PORT
         print('proxy:', PROXY)
 
+        options = Options()
+        options.headless = True
+
         firefox_capabilities = webdriver.DesiredCapabilities.FIREFOX
         firefox_capabilities['marionette'] = True
 
@@ -47,7 +51,7 @@ def chrome_webdriver():
         firefox_capabilities["pageLoadStrategy"] = "eager"
         cookie = 'AQEDATe-csACVLx3AAABfAolGqsAAAF8LjGeq00AOqY34TIfcMpo0GMSXwwReRXp8gKoSsgxI97st5e4FDlO4VK3DSXXOevyluAtGlk60gX6PwXLDBC_9WEviRb8xyLb9vutyfrzfaji_5hPevzVoRdU'
         firefox_capabilities['acceptSslCerts'] = True
-        chrome = webdriver.Firefox(capabilities=firefox_capabilities)
+        chrome = webdriver.Firefox(options=options, capabilities=firefox_capabilities)
         chrome.set_page_load_timeout(20)
         chrome.get("http://api.ipify.org")
         chrome.set_page_load_timeout(60)
@@ -67,6 +71,9 @@ def scrape_linkedin(link, chrome):
         chrome.find_element_by_tag_name('body').send_keys(Keys.CONTROL + 't')
         chrome.get(link)
         time.sleep(15)
+        if 'auth' in chrome.current_url:
+            print('Auth Wall Detected')
+            exit()
         chrome.get(chrome.current_url + 'about')
         start = time.time()
         lastHeight = chrome.execute_script("return document.body.scrollHeight")
@@ -131,7 +138,7 @@ if __name__ == "__main__":
     db = connect_to_db()
     activeCompanies = db.activeCompanies
     stackData = db.stackData
-    for document in activeCompanies.find():
+    for document in activeCompanies.find().skip(int(sys.argv[1])).limit(int(sys.argv[2])):
         if document.get('linkedin') is not None:
             links.append(
                 (document.get('uuid'), document.get('linkedin')['value']))
