@@ -39,7 +39,7 @@ def chrome_webdriver():
         urllib.request.ProxyHandler({'http': 'http://lum-customer-c_3b483b89-zone-residentialrotator:maau0b8jhjrq@zproxy.lum-superproxy.io:22225',
         'https': 'http://lum-customer-c_3b483b89-zone-residentialrotator:maau0b8jhjrq@zproxy.lum-superproxy.io:22225'}))
         ip = json.loads(opener.open('http://lumtest.com/myip.json').read().decode('utf-8'))['ip']
-        print(opener.open('http://linkedin.com/company/amazon').read())
+        print(opener.open('http://linkedin.com/comapny').read())
         print(ip)
         PROXY = '{0}'.format(ip)  # IP:PORT or HOST:PORT
         print('proxy:', PROXY)
