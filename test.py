@@ -13,7 +13,7 @@ from pprint import pprint
 import csv
 from selenium.webdriver.firefox.options import Options
 import sys
-
+import urllib.request
 
 def connect_to_db():
     client = MongoClient(
@@ -35,7 +35,13 @@ def proxy_generator():
 
 def chrome_webdriver():
     try:
-        PROXY = proxy_generator()  # IP:PORT or HOST:PORT
+        opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({'http': 'http://lum-customer-c_3b483b89-zone-residentialrotator:maau0b8jhjrq@zproxy.lum-superproxy.io:22225',
+        'https': 'http://lum-customer-c_3b483b89-zone-residentialrotator:maau0b8jhjrq@zproxy.lum-superproxy.io:22225'}))
+        ip = json.loads(opener.open('http://lumtest.com/myip.json').read().decode('utf-8'))['ip']
+        print(opener.open('http://linkedin.com/company/amazon').read())
+        print(ip)
+        PROXY = '{0}'.format(ip)  # IP:PORT or HOST:PORT
         print('proxy:', PROXY)
 
         options = Options()
@@ -46,23 +52,25 @@ def chrome_webdriver():
 
         firefox_capabilities['proxy'] = {
             "proxyType": "MANUAL",
-            "httpProxy": PROXY,
-            "sslProxy": PROXY
+            "httpProxy": PROXY + ':80',
+            "sslProxy": PROXY + ':443'
         }
+        profile = webdriver.FirefoxProfile()
+        profile.set_preference("general.useragent.override", 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')
         firefox_capabilities["pageLoadStrategy"] = "eager"
-        cookie = 'AQEDATe-csACVLx3AAABfAolGqsAAAF8LjGeq00AOqY34TIfcMpo0GMSXwwReRXp8gKoSsgxI97st5e4FDlO4VK3DSXXOevyluAtGlk60gX6PwXLDBC_9WEviRb8xyLb9vutyfrzfaji_5hPevzVoRdU'
+        # cookie = 'AQEDATe-csACVLx3AAABfAolGqsAAAF8LjGeq00AOqY34TIfcMpo0GMSXwwReRXp8gKoSsgxI97st5e4FDlO4VK3DSXXOevyluAtGlk60gX6PwXLDBC_9WEviRb8xyLb9vutyfrzfaji_5hPevzVoRdU'
         firefox_capabilities['acceptSslCerts'] = True
-        chrome = webdriver.Firefox(options=options, capabilities=firefox_capabilities)
-        # chrome = webdriver.Firefox(capabilities=firefox_capabilities)
+        # chrome = webdriver.Firefox(options=options, capabilities=firefox_capabilities)
+        chrome = webdriver.Firefox(capabilities=firefox_capabilities, firefox_profile=profile)
         chrome.set_page_load_timeout(20)
         chrome.get("http://api.ipify.org")
         chrome.set_page_load_timeout(60)
         chrome.get('https://www.linkedin.com')
-        chrome.add_cookie({
-            'name': 'li_at',
-            'value': cookie,
-            'domain': '.linkedin.com'
-        })
+        # chrome.add_cookie({
+        #     'name': 'li_at',
+        #     'value': cookie,
+        #     'domain': '.linkedin.com'
+        # })
         return chrome
     except Exception as e:
         raise e
@@ -75,7 +83,6 @@ def scrape_linkedin(link, chrome):
         time.sleep(15)
         if 'auth' in chrome.current_url:
             print('Auth Wall Detected')
-            exit()
         chrome.get(chrome.current_url + 'about')
         start = time.time()
         lastHeight = chrome.execute_script("return document.body.scrollHeight")
@@ -147,7 +154,7 @@ if __name__ == "__main__":
         else:
             non_linked_in_companies.append(document.get('uuid'))
         # print(len(links))
-        if len(links) == 20:
+        if len(links) == 1:
             # print(links)
             while True:
                 try:
