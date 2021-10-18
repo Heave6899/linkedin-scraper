@@ -13,7 +13,7 @@ from pprint import pprint
 import csv
 from selenium.webdriver.firefox.options import Options
 import sys
-
+import urllib
 
 def connect_to_db():
     client = MongoClient(
@@ -24,77 +24,55 @@ def connect_to_db():
 
 # Issue the serverStatus command and print the results
 
-def proxy_generator():
-    response = requests.get("https://sslproxies.org/")
-    soup = bs(response.content, 'html5lib')
-    proxy = {'https': choice(list(map(lambda x: x[0]+':'+x[1], list(zip(map(
-        lambda x: x.text, soup.findAll('td')[::8]), map(lambda x: x.text, soup.findAll('td')[1::8]))))))}
-
-    return proxy['https']
-
-
-def chrome_webdriver():
+def request_opener():
     try:
-        PROXY = proxy_generator()  # IP:PORT or HOST:PORT
-        print('proxy:', PROXY)
+        opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({'http': 'http://lum-customer-c_3b483b89-zone-residentialrotator:maau0b8jhjrq@zproxy.lum-superproxy.io:22225',
+        'https': 'http://lum-customer-c_3b483b89-zone-residentialrotator:maau0b8jhjrq@zproxy.lum-superproxy.io:22225'}))
 
-        options = Options()
-        options.headless = True
-
-        firefox_capabilities = webdriver.DesiredCapabilities.FIREFOX
-        firefox_capabilities['marionette'] = True
-
-        firefox_capabilities['proxy'] = {
-            "proxyType": "MANUAL",
-            "httpProxy": PROXY,
-            "sslProxy": PROXY
-        }
-        firefox_capabilities["pageLoadStrategy"] = "eager"
-        cookie = 'AQEDATe-csACVLx3AAABfAolGqsAAAF8LjGeq00AOqY34TIfcMpo0GMSXwwReRXp8gKoSsgxI97st5e4FDlO4VK3DSXXOevyluAtGlk60gX6PwXLDBC_9WEviRb8xyLb9vutyfrzfaji_5hPevzVoRdU'
-        firefox_capabilities['acceptSslCerts'] = True
-        chrome = webdriver.Firefox(options=options, capabilities=firefox_capabilities)
-        # chrome = webdriver.Firefox(capabilities=firefox_capabilities)
-        chrome.set_page_load_timeout(20)
-        chrome.get("http://api.ipify.org")
-        chrome.set_page_load_timeout(60)
-        chrome.get('https://www.linkedin.com')
-        chrome.add_cookie({
-            'name': 'li_at',
-            'value': cookie,
-            'domain': '.linkedin.com'
-        })
-        return chrome
+        # print(opener.open('http://lumtest.com/myip.json').read())
+        opener.open('https://www.linkedin.com')
+        time.sleep(10)
+        x = opener.open('https://www.google.com')
+        return opener
     except Exception as e:
         raise e
 
 
-def scrape_linkedin(link, chrome):
+def scrape_linkedin(link, opener):
     try:
-        chrome.find_element_by_tag_name('body').send_keys(Keys.CONTROL + 't')
-        chrome.get(link)
+        print("inside scrape")
+        response = opener.open(link)
         time.sleep(15)
-        if 'auth' in chrome.current_url:
+        print(response.read())
+        response = opener.open(link.rstrip('/', 1)[0] + '/about')
+        time.sleep(15)
+        source = response.read()
+        print('source:',source)
+        # chrome.get(link)
+       
+        if 'auth' in response.current_url:
             print('Auth Wall Detected')
             exit()
-        chrome.get(chrome.current_url + 'about')
-        start = time.time()
-        lastHeight = chrome.execute_script("return document.body.scrollHeight")
-        while True:
-            chrome.execute_script(
-                "window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(5)
-            newHeight = chrome.execute_script(
-                "return document.body.scrollHeight")
-            if newHeight == lastHeight:
-                break
-            lastHeight = newHeight
-            end = time.time()
-            if round(end-start) > 20:
-                break
+        # chrome.get(chrome.current_url + 'about')
+        # start = time.time()
+        # lastHeight = chrome.execute_script("return document.body.scrollHeight")
+        # while True:
+            # chrome.execute_script(
+            #     "window.scrollTo(0, document.body.scrollHeight);")
+            # time.sleep(5)
+            # newHeight = chrome.execute_script(
+            #     "return document.body.scrollHeight")
+            # if newHeight == lastHeight:
+            #     break
+            # lastHeight = newHeight
+            # end = time.time()
+            # if round(end-start) > 20:
+            #     break
 
-        company_page = chrome.page_source
+        # company_page = chrome.page_source
 
-        linkedin_soup = bs(company_page.encode("utf-8"), 'html.parser')
+        linkedin_soup = bs(source.encode("utf-8"), 'html.parser')
         for script in linkedin_soup(["script", "style"]):
             script.extract()    # rip it out
 
@@ -116,7 +94,7 @@ def scrape_linkedin(link, chrome):
         return jsonOutput
 
     except Exception as e:
-        chrome.quit()
+        # chrome.quit()
         raise Exception
 
 
@@ -147,20 +125,28 @@ if __name__ == "__main__":
         else:
             non_linked_in_companies.append(document.get('uuid'))
         # print(len(links))
-        if len(links) == 20:
+        if len(links) == 1:
             # print(links)
-            while True:
-                try:
-                    chrome = chrome_webdriver()
-                    break
-                except Exception as e:
-                    print(e)
+            # while True:
+            #     try:
+                    
+            #         break
+            #     except Exception as e:
+            #         print(e)
             for i in links:
                 try:
                     print(i)
                     document = activeCompanies.find_one({'uuid': i[0]})
-                    if document.get('num_employees_enum') is None:
-                        jsonOutput = scrape_linkedin(i[1], chrome)
+                    if document:
+                        jsonOutput = None
+                        while jsonOutput is None:
+                          try:
+                              opener = request_opener()
+                              jsonOutput = scrape_linkedin(i[1], opener)
+                              print('jsonOutput',jsonOutput)
+                          except Exception as e:
+                              print(e)
+                        
                         print('scrapped:', jsonOutput, type(jsonOutput))
                         if isinstance(jsonOutput, Dict):
                             # jsonOutput['uuid'] = i[0]
@@ -246,7 +232,7 @@ if __name__ == "__main__":
                         save_csv(jsonOutput, csv_columns)
                 except Exception as e:
                     print(e)
-            chrome.quit()
+            # chrome.quit()
             links = []
         else:
             if len(non_linked_in_companies) > 0:
