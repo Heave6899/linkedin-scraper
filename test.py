@@ -173,7 +173,7 @@ def scrape_linkedin(link, chrome):
 
     except Exception as e:
         chrome.quit()
-	    print(e)
+        print(e)
         failed += 1
         return None
 
