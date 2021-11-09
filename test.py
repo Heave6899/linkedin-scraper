@@ -363,7 +363,7 @@ if __name__ == "__main__":
     total = 0
     path = '../WebScrap'
     csv_columns = ['Company Name', 'Software',
-                   'Current Funding Level', 'Company Size', 'Company Size Linkedin', 'Linkedin Employees','Website', 'Industry']
+                   'Current Funding Level', 'Company Size', 'Company Size Linkedin', 'Linkedin Employees','Website', 'Industry', 'Scraped']
     user_agent = 'Mozilla/5.0 CK={} (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko'
     USERNAME = "krdrxebzvrvdnntgst@sdvgeft.com"
     PASSWORD = "123Vansh"
