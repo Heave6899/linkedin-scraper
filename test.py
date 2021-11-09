@@ -73,7 +73,7 @@ def chrome_webdriver():
             }
         }
         
-        chrome = webdriver.Chrome (options=options, seleniumwire_options=options_seleniumWire)
+        chrome = webdriver.Chrome(executable_path='./chromedriver', options=options, seleniumwire_options=options_seleniumWire)
         # chrome = webdriver.Chrome (options=options)
         # return driver
         # PROXY = proxy_generator()  # IP:PORT or HOST:PORT
@@ -173,6 +173,7 @@ def scrape_linkedin(link, chrome):
 
     except Exception as e:
         chrome.quit()
+	print(e)
         failed += 1
         return None
 
@@ -221,7 +222,7 @@ def thread_fn(activeCompanies, stackData, start, end):
                             if len(jsonOutput) == 0:
                                 jsonOutput['Scraped'] = False
                             else:
-                                jsonOutput['Scraped'] = False
+                                jsonOutput['Scraped'] = True
                             # jsonOutput['uuid'] = i[0]
                             jsonOutput['Company Name'] = document.get('identifier')[
                                 'value']
@@ -260,7 +261,7 @@ def thread_fn(activeCompanies, stackData, start, end):
                                     jsonOutput['Industry'] = ''
                             save_csv(jsonOutput, csv_columns)
                     else:
-                        jsonOutput = {}
+                        jsonOutput = {'Scraped': False}
                         # jsonOutput['uuid'] = i[0]
                         stack = []
                         for stacks in stackData.find({'org_uuid': i[0]}):
