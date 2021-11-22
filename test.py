@@ -170,7 +170,8 @@ def scrape_linkedin(link, chrome):
         print('function', jsonOutput)
         time.sleep(15)
         return jsonOutput
-
+# xpath = //*[@id='rso']/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/a[1]
+          #//*[@id='rso']/div[1]/div[1]/div[2]/div[1]/a[1]/h3[1]
     except Exception as e:
         chrome.quit()
         print(e)
